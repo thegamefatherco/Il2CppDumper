@@ -271,6 +271,10 @@ namespace Il2CppDumper
                 DummyAssemblyExporter.Export(executor, outputDir, config.DummyDllAddToken);
                 Logger.Log("Done!");
             }
+            if (executor.MalformedDefaultValueCount > 0)
+            {
+                Logger.Log($"WARNING: Skipped {executor.MalformedDefaultValueCount} malformed default value blob(s); emitted MetadataOffset instead");
+            }
         }
     }
 }

@@ -328,17 +328,26 @@ namespace Il2CppDumper
             var pointer = metadata.GetDefaultValueFromIndex(dataIndex);
             var defaultValueType = il2Cpp.types[typeIndex];
             metadata.Position = pointer;
-            if (GetConstantValueFromBlob(defaultValueType.type, metadata.Reader, out var blobValue))
+            try
             {
-                value = blobValue.Value;
-                return true;
+                if (GetConstantValueFromBlob(defaultValueType.type, metadata.Reader, out var blobValue))
+                {
+                    value = blobValue.Value;
+                    return true;
+                }
             }
-            else
+            catch (Exception)
             {
-                value = pointer;
-                return false;
+                // Metadata v35+ can point field/parameter defaults at blobs that do not match
+                // the declared type (e.g. <PrivateImplementationDetails> static data). Callers
+                // fall back to emitting the metadata offset instead of a constant.
+                MalformedDefaultValueCount++;
             }
+            value = pointer;
+            return false;
         }
+
+        public int MalformedDefaultValueCount { get; private set; }
 
         public bool GetConstantValueFromBlob(Il2CppTypeEnum type, BinaryReader reader, out BlobValue value)
         {
